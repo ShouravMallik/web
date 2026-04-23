@@ -9,7 +9,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/pages', express.static(path.join(__dirname, 'public/pages')));
 app.use(session({
     secret: 'shopping_secret_key',
     resave: false,
@@ -20,6 +19,31 @@ function requireLogin(req, res, next) {
     if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
     next();
 }
+
+// ─── PAGE ROUTES ───────────────────────────────────────────────
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'login.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'register.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'dashboard.html'));
+});
+
+app.get('/list', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'list.html'));
+});
+
+app.get('/history', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'history.html'));
+});
+
+app.get('/stats', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pages', 'stats.html'));
+});
 
 // ─── AUTH ──────────────────────────────────────────────────────
 app.post('/register', async (req, res) => {
@@ -45,13 +69,13 @@ app.post('/login', (req, res) => {
 });
 
 app.get('/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
+
 app.get('/me', (req, res) => {
     if (!req.session.user) return res.json({ user: null });
     res.json({ user: req.session.user });
 });
 
 // ─── LISTS ─────────────────────────────────────────────────────
-// ⚠️ /lists/progress MUST come before /lists/:id
 app.get('/lists/progress', requireLogin, (req, res) => {
     db.query(
         `SELECT sl.id, sl.name, sl.created_at,
@@ -116,17 +140,9 @@ app.get('/items/:listId', requireLogin, (req, res) => {
 
 app.post('/items', requireLogin, (req, res) => {
     const { list_id, name, quantity, price } = req.body;
-
-    console.log("DEBUG:", req.body); // ← add this
-
     db.query(
         'INSERT INTO items (list_id, name, quantity, price) VALUES (?,?,?,?)',
-        [
-            list_id,
-            name,
-            Number(quantity) || 1,
-            Number(price) || 0   // 🔥 THIS LINE FIXES IT
-        ],
+        [list_id, name, Number(quantity) || 1, Number(price) || 0],
         (err, result) => {
             if (err) return res.json({ error: err.message });
             res.json({ success: true, id: result.insertId });
@@ -159,9 +175,8 @@ app.delete('/items/:id', requireLogin, (req, res) => {
         res.json({ success: true });
     });
 });
-// ─── PURCHASE HISTORY ──────────────────────────────────────────
 
-// যখন item complete হয় তখন history তে save করো
+// ─── PURCHASE HISTORY ──────────────────────────────────────────
 app.post('/history/add', requireLogin, (req, res) => {
     const { item_name, quantity, price } = req.body;
     db.query(
@@ -174,7 +189,6 @@ app.post('/history/add', requireLogin, (req, res) => {
     );
 });
 
-// Frequently bought items
 app.get('/history/frequent', requireLogin, (req, res) => {
     db.query(
         `SELECT item_name, COUNT(*) as times, SUM(quantity) as total_qty
@@ -191,65 +205,6 @@ app.get('/history/frequent', requireLogin, (req, res) => {
     );
 });
 
-// ─── STATISTICS ────────────────────────────────────────────────
-
-app.get('/stats', requireLogin, (req, res) => {
-    const userId = req.session.user.id;
-
-    // Total lists
-    db.query('SELECT COUNT(*) as total_lists FROM shopping_lists WHERE user_id = ?', [userId], (err, lists) => {
-        if (err) return res.json({ error: err.message });
-
-        // Total items bought
-        db.query('SELECT COUNT(*) as total_bought FROM purchase_history WHERE user_id = ?', [userId], (err, bought) => {
-            if (err) return res.json({ error: err.message });
-
-            // Most bought items
-            db.query(
-                `SELECT item_name, COUNT(*) as times
-                 FROM purchase_history WHERE user_id = ?
-                 GROUP BY item_name ORDER BY times DESC LIMIT 5`,
-                [userId], (err, topItems) => {
-                if (err) return res.json({ error: err.message });
-
-                // Weekly spending (last 7 days)
-                db.query(
-                    `SELECT DATE(purchased_at) as day, SUM(price * quantity) as spent
-                     FROM purchase_history
-                     WHERE user_id = ? AND purchased_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-                     GROUP BY DATE(purchased_at)
-                     ORDER BY day ASC`,
-                    [userId], (err, weekly) => {
-                    if (err) return res.json({ error: err.message });
-
-                    // Completion rate
-                    db.query(
-                        `SELECT 
-                            COUNT(*) as total,
-                            SUM(completed) as done
-                         FROM items i
-                         JOIN shopping_lists sl ON i.list_id = sl.id
-                         WHERE sl.user_id = ?`,
-                        [userId], (err, completion) => {
-                        if (err) return res.json({ error: err.message });
-
-                        const total = completion[0].total || 0;
-                        const done  = completion[0].done  || 0;
-                        const rate  = total > 0 ? Math.round((done / total) * 100) : 0;
-
-                        res.json({
-                            total_lists:  lists[0].total_lists,
-                            total_bought: bought[0].total_bought,
-                            top_items:    topItems,
-                            weekly:       weekly,
-                            completion_rate: rate
-                        });
-                    });
-                });
-            });
-        });
-    });
-});
 app.get('/history/all', requireLogin, (req, res) => {
     db.query(
         `SELECT * FROM purchase_history 
@@ -263,6 +218,59 @@ app.get('/history/all', requireLogin, (req, res) => {
         }
     );
 });
+
+// ─── STATISTICS ────────────────────────────────────────────────
+app.get('/api/stats', requireLogin, (req, res) => {
+    const userId = req.session.user.id;
+
+    db.query('SELECT COUNT(*) as total_lists FROM shopping_lists WHERE user_id = ?', [userId], (err, lists) => {
+        if (err) return res.json({ error: err.message });
+
+        db.query('SELECT COUNT(*) as total_bought FROM purchase_history WHERE user_id = ?', [userId], (err, bought) => {
+            if (err) return res.json({ error: err.message });
+
+            db.query(
+                `SELECT item_name, COUNT(*) as times
+                 FROM purchase_history WHERE user_id = ?
+                 GROUP BY item_name ORDER BY times DESC LIMIT 5`,
+                [userId], (err, topItems) => {
+                if (err) return res.json({ error: err.message });
+
+                db.query(
+                    `SELECT DATE(purchased_at) as day, SUM(price * quantity) as spent
+                     FROM purchase_history
+                     WHERE user_id = ? AND purchased_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                     GROUP BY DATE(purchased_at)
+                     ORDER BY day ASC`,
+                    [userId], (err, weekly) => {
+                    if (err) return res.json({ error: err.message });
+
+                    db.query(
+                        `SELECT COUNT(*) as total, SUM(completed) as done
+                         FROM items i
+                         JOIN shopping_lists sl ON i.list_id = sl.id
+                         WHERE sl.user_id = ?`,
+                        [userId], (err, completion) => {
+                        if (err) return res.json({ error: err.message });
+
+                        const total = completion[0].total || 0;
+                        const done  = completion[0].done  || 0;
+                        const rate  = total > 0 ? Math.round((done / total) * 100) : 0;
+
+                        res.json({
+                            total_lists:     lists[0].total_lists,
+                            total_bought:    bought[0].total_bought,
+                            top_items:       topItems,
+                            weekly:          weekly,
+                            completion_rate: rate
+                        });
+                    });
+                });
+            });
+        });
+    });
+});
+
 // ─── SUGGESTIONS ───────────────────────────────────────────────
 app.get('/suggestions', requireLogin, (req, res) => {
     const query = req.query.q || '';
@@ -275,28 +283,11 @@ app.get('/suggestions', requireLogin, (req, res) => {
     );
 });
 
-// ─── PAGE ROUTES ───────────────────────────────────────────────
-app.get('/', (req, res) => {
-    res.redirect('/pages/login.html');
-});
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/pages/dashboard.html'));
-});
+// ─── HEALTH CHECK ──────────────────────────────────────────────
+app.get('/health', (req, res) => res.send('OK'));
 
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/pages/register.html'));
-});
-app.get("/health", (req, res) => {
-    res.send("OK");
-});
-
-app.get("/check", (req, res) => {
-    res.send("CHECK OK");
-});
-
+// ─── START ─────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
-
