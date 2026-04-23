@@ -166,7 +166,7 @@
                 body: JSON.stringify({ completed, price, quantity })
             });
             if (completed) {
-                await fetch('/history/add', {
+                await fetch('/api/history/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ item_name: name, quantity, price })
