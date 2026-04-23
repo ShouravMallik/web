@@ -274,6 +274,13 @@ app.get('/suggestions', requireLogin, (req, res) => {
         }
     );
 });
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
+app.get("/", (req, res) => {
+  res.send("HOME WORKING");
+});
 // ─── PAGE ROUTES ───────────────────────────────────────────────
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/pages/login.html'));
@@ -291,6 +298,3 @@ app.get('/register', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 // ─── START ─────────────────────────────────────────────────────
-app.get("/test", (req, res) => {
-    res.send("Server OK 🚀");
-});
