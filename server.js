@@ -277,9 +277,8 @@ app.get('/suggestions', requireLogin, (req, res) => {
 
 // ─── PAGE ROUTES ───────────────────────────────────────────────
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/pages/login.html'));
+    res.redirect('/pages/login.html');
 });
-
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/pages/dashboard.html'));
 });
@@ -287,9 +286,14 @@ app.get('/dashboard', (req, res) => {
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/pages/register.html'));
 });
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
     res.send("OK");
 });
+
+app.get("/check", (req, res) => {
+    res.send("CHECK OK");
+});
+
 const PORT = process.env.PORT || 3000;
 
 db.connect((err) => {
