@@ -273,6 +273,21 @@ app.get('/suggestions', requireLogin, (req, res) => {
         }
     );
 });
+// ─── PAGE ROUTES ───────────────────────────────────────────────
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/pages/login.html'));
+});
 
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/pages/dashboard.html'));
+});
+
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/pages/register.html'));
+});
+
+// ─── START ─────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 // ─── START ─────────────────────────────────────────────────────
 app.listen(3000, () => console.log('Server running at http://localhost:3000'));
