@@ -296,15 +296,7 @@ app.get("/check", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-db.connect((err) => {
-    if (err) {
-        console.error("❌ DB connection failed:", err);
-        process.exit(1);
-    }
-
-    console.log("✅ Connected to MySQL");
-
-    app.listen(PORT, "0.0.0.0", () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-    });
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
+
