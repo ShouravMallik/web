@@ -13,8 +13,8 @@
     <nav>
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
-            <a href="dashboard.html">← Dashboard</a>
-            <a href="history.html">📋 History</a>
+            <a href="/dashboard">← Dashboard</a>                     <!-- ✅ fixed -->
+            <a href="/pages/history.html">📋 History</a>             <!-- ✅ fixed -->
             <a href="#" onclick="logout()">Logout</a>
         </div>
     </nav>
@@ -24,7 +24,6 @@
             <h2>📊 My Statistics</h2>
         </div>
 
-        <!-- STAT CARDS -->
         <div class="stat-cards">
             <div class="stat-card">
                 <div class="stat-icon">📋</div>
@@ -43,7 +42,6 @@
             </div>
         </div>
 
-        <!-- CHARTS -->
         <div class="charts-grid">
             <div class="chart-box">
                 <h3>📈 Weekly Spending (৳)</h3>
@@ -55,7 +53,6 @@
             </div>
         </div>
 
-        <!-- COMPLETION RATE BAR -->
         <div class="stat-section">
             <h3>🎯 Overall Completion Rate</h3>
             <div class="progress-bar-bg" style="height:16px; margin-top:12px;">
@@ -71,21 +68,17 @@
             const data = await res.json();
 
             if (data.error) {
-                window.location.href = 'login.html';
+                window.location.href = '/pages/login.html';          // ✅ fixed
                 return;
             }
 
-            // Stat cards
-            document.getElementById('total-lists').textContent  = data.total_lists;
-            document.getElementById('total-bought').textContent = data.total_bought;
-            document.getElementById('completion-rate').textContent = data.completion_rate + '%';
-
-            // Completion bar
-            document.getElementById('completion-bar').style.width = data.completion_rate + '%';
-            document.getElementById('completion-text').textContent =
+            document.getElementById('total-lists').textContent      = data.total_lists;
+            document.getElementById('total-bought').textContent     = data.total_bought;
+            document.getElementById('completion-rate').textContent  = data.completion_rate + '%';
+            document.getElementById('completion-bar').style.width   = data.completion_rate + '%';
+            document.getElementById('completion-text').textContent  =
                 `${data.completion_rate}% of all items completed across all lists`;
 
-            // Weekly chart
             const days  = data.weekly.map(w => w.day.slice(5));
             const spent = data.weekly.map(w => parseFloat(w.spent));
 
@@ -109,7 +102,6 @@
                 }
             });
 
-            // Top items chart
             const names = data.top_items.map(i => i.item_name);
             const times = data.top_items.map(i => i.times);
 
@@ -137,7 +129,7 @@
 
         async function logout() {
             await fetch('/logout');
-            window.location.href = 'login.html';
+            window.location.href = '/pages/login.html';              // ✅ fixed
         }
 
         loadStats();

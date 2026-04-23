@@ -5,20 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping List</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
     <nav id="main-nav">
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
-            <a href="dashboard.html">← Back</a>
+            <a href="/dashboard">← Back</a>                          <!-- ✅ fixed -->
             <button class="btn btn-shopping" onclick="enterShoppingMode()">🛒 Shopping Mode</button>
             <a href="#" onclick="logout()">Logout</a>
         </div>
     </nav>
 
-    <!-- SHOPPING MODE OVERLAY -->
     <div id="shopping-mode" class="shopping-overlay hidden">
         <div class="shopping-header">
             <h2 id="shopping-title"></h2>
@@ -33,7 +32,6 @@
         </div>
     </div>
 
-    <!-- NORMAL VIEW -->
     <div class="dashboard" id="normal-view">
         <div class="dashboard-header">
             <h2 id="list-title">Shopping List</h2>
@@ -43,12 +41,10 @@
             </div>
         </div>
 
-        <!-- PROGRESS BAR -->
         <div class="progress-bar-bg" style="margin-bottom:24px">
             <div class="progress-bar-fill" id="main-progress" style="width:0%"></div>
         </div>
 
-        <!-- ADD ITEM FORM -->
         <div class="add-item-form">
             <div class="suggestion-wrapper">
                 <input type="text" id="itemName" placeholder="Item name..."
@@ -68,14 +64,13 @@
     <script>
         const listId   = localStorage.getItem('currentListId');
         const listName = localStorage.getItem('currentListName');
-        if (!listId) window.location.href = 'dashboard.html';
+        if (!listId) window.location.href = '/dashboard';            // ✅ fixed
 
-        document.getElementById('list-title').textContent    = '🛒 ' + listName;
+        document.getElementById('list-title').textContent     = '🛒 ' + listName;
         document.getElementById('shopping-title').textContent = listName;
 
         let allItems = [];
 
-        // ── LOAD ITEMS ──────────────────────────────────────────
         async function loadItems() {
             const res = await fetch('/items/' + listId);
             allItems = await res.json();
@@ -86,12 +81,10 @@
         function renderItems() {
             const container = document.getElementById('items-container');
             container.innerHTML = '';
-
             if (!allItems.length) {
                 container.innerHTML = '<p class="empty-msg">No items yet. Add one above!</p>';
                 return;
             }
-
             allItems.forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'item-row' + (item.completed ? ' completed' : '');
@@ -107,25 +100,19 @@
             });
         }
 
-        // ── PROGRESS & COST ─────────────────────────────────────
         function updateProgress() {
             const total     = allItems.length;
             const completed = allItems.filter(i => i.completed).length;
             const percent   = total > 0 ? Math.round((completed / total) * 100) : 0;
             const cost      = allItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-
-            document.getElementById('progress-text').textContent =
-                `${completed}/${total} items · ${percent}%`;
-            document.getElementById('total-cost').textContent =
-                `💰 Total: ৳${cost.toFixed(2)}`;
+            document.getElementById('progress-text').textContent = `${completed}/${total} items · ${percent}%`;
+            document.getElementById('total-cost').textContent    = `💰 Total: ৳${cost.toFixed(2)}`;
             document.getElementById('main-progress').style.width = percent + '%';
         }
 
-        // ── SMART SUGGESTIONS ───────────────────────────────────
         async function fetchSuggestions(query) {
             const box = document.getElementById('suggestions-box');
             if (query.length < 2) { box.innerHTML = ''; box.style.display = 'none'; return; }
-
             const common = [
                 'Rice','Milk','Eggs','Bread','Butter','Sugar','Salt','Oil','Onion',
                 'Potato','Tomato','Garlic','Chicken','Fish','Beef','Flour','Tea',
@@ -133,13 +120,8 @@
                 'Chocolate','Cheese','Yogurt','Lemon','Carrot','Cabbage','Spinach',
                 'Noodles','Pasta','Ketchup','Mineral Water','Tissue','Detergent'
             ];
-
-            const filtered = common.filter(i =>
-                i.toLowerCase().startsWith(query.toLowerCase())
-            ).slice(0, 6);
-
+            const filtered = common.filter(i => i.toLowerCase().startsWith(query.toLowerCase())).slice(0, 6);
             if (!filtered.length) { box.innerHTML = ''; box.style.display = 'none'; return; }
-
             box.style.display = 'block';
             box.innerHTML = filtered.map(s =>
                 `<div class="suggestion-item" onclick="selectSuggestion('${s}')">${s}</div>`
@@ -153,18 +135,15 @@
         }
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.suggestion-wrapper')) {
+            if (!e.target.closest('.suggestion-wrapper'))
                 document.getElementById('suggestions-box').style.display = 'none';
-            }
         });
 
-        // ── ADD ITEM ────────────────────────────────────────────
         async function addItem() {
             const name     = document.getElementById('itemName').value.trim();
             const quantity = document.getElementById('itemQty').value || 1;
             const price    = document.getElementById('itemPrice').value || 0;
             if (!name) return alert('Enter item name');
-
             const res = await fetch('/items', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -180,33 +159,30 @@
             }
         }
 
-       async function toggleItem(id, completed, price, quantity, name) {
-    await fetch('/items/' + id + '/full', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed, price, quantity })
-    });
-    if (completed) {
-        await fetch('/history/add', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ item_name: name, quantity, price })
-        });
-    }
-    loadItems();
-}
+        async function toggleItem(id, completed, price, quantity, name) {
+            await fetch('/items/' + id + '/full', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed, price, quantity })
+            });
+            if (completed) {
+                await fetch('/history/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_name: name, quantity, price })
+                });
+            }
+            loadItems();
+        }
 
-        // ── DELETE ITEM ─────────────────────────────────────────
         async function deleteItem(id) {
             await fetch('/items/' + id, { method: 'DELETE' });
             loadItems();
         }
 
-        // ── SHOPPING MODE ───────────────────────────────────────
         function enterShoppingMode() {
             const incomplete = allItems.filter(i => !i.completed);
             if (!incomplete.length) return alert('All items already completed!');
-
             document.getElementById('shopping-mode').classList.remove('hidden');
             document.getElementById('normal-view').style.display = 'none';
             document.getElementById('main-nav').style.display    = 'none';
@@ -217,21 +193,14 @@
             const incomplete = allItems.filter(i => !i.completed);
             const total      = allItems.length;
             const completed  = allItems.filter(i => i.completed).length;
-
-            document.getElementById('shopping-count').textContent =
-                `${completed}/${total} done`;
-
+            document.getElementById('shopping-count').textContent = `${completed}/${total} done`;
             const container = document.getElementById('shopping-items');
             container.innerHTML = '';
-
             if (!incomplete.length) {
                 document.getElementById('shopping-complete').classList.remove('hidden');
-                container.innerHTML = '';
                 return;
             }
-
             document.getElementById('shopping-complete').classList.add('hidden');
-
             incomplete.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'shopping-item' + (index === 0 ? ' shopping-current' : '');
@@ -249,27 +218,24 @@
             });
         }
 
-      async function shoppingCheck(id, price, quantity, name) {
-    const el = document.getElementById('sitem-' + id);
-    el.classList.add('shopping-done-anim');
-
-    await fetch('/items/' + id + '/full', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: true, price, quantity })
-    });
-
-    await fetch('/history/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_name: name, quantity, price })
-    });
-
-    setTimeout(async () => {
-        await loadItems();
-        renderShoppingMode();
-    }, 600);
-}
+        async function shoppingCheck(id, price, quantity, name) {
+            const el = document.getElementById('sitem-' + id);
+            el.classList.add('shopping-done-anim');
+            await fetch('/items/' + id + '/full', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: true, price, quantity })
+            });
+            await fetch('/history/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item_name: name, quantity, price })
+            });
+            setTimeout(async () => {
+                await loadItems();
+                renderShoppingMode();
+            }, 600);
+        }
 
         function exitShoppingMode() {
             document.getElementById('shopping-mode').classList.add('hidden');
@@ -279,7 +245,7 @@
 
         async function logout() {
             await fetch('/logout');
-            window.location.href = 'login.html';
+            window.location.href = '/pages/login.html';              // ✅ fixed
         }
 
         loadItems();

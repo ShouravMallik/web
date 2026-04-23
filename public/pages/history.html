@@ -12,8 +12,8 @@
     <nav>
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
-            <a href="dashboard.html">← Dashboard</a>
-            <a href="stats.html">📊 Stats</a>
+            <a href="/dashboard">← Dashboard</a>              <!-- ✅ fixed -->
+            <a href="/pages/stats.html">📊 Stats</a>          <!-- ✅ fixed -->
             <a href="#" onclick="logout()">Logout</a>
         </div>
     </nav>
@@ -23,13 +23,11 @@
             <h2>📋 Purchase History</h2>
         </div>
 
-        <!-- FREQUENTLY BOUGHT -->
         <div class="stat-section">
             <h3>🔥 Frequently Bought</h3>
             <div id="frequent-container" class="frequent-grid"></div>
         </div>
 
-        <!-- FULL HISTORY -->
         <div class="stat-section" style="margin-top:32px;">
             <h3>🕐 Recent Purchases</h3>
             <div id="history-container"></div>
@@ -38,7 +36,6 @@
 
     <script>
         async function loadHistory() {
-            // Frequent items
             const freqRes  = await fetch('/history/frequent');
             const frequent = await freqRes.json();
 
@@ -54,7 +51,6 @@
                 `).join('');
             }
 
-            // Full history
             const histRes  = await fetch('/history/all');
             const history  = await histRes.json();
 
@@ -74,7 +70,7 @@
 
         async function logout() {
             await fetch('/logout');
-            window.location.href = 'login.html';
+            window.location.href = '/pages/login.html';  // ✅ fixed
         }
 
         loadHistory();

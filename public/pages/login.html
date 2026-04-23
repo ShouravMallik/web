@@ -6,15 +6,16 @@
     <title>Login</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="/css/style.css">  <!-- ✅ fixed -->
 </head>
 <body>
     <nav>
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="login.html">Login</a>
-            <a href="register.html">Register</a>
+            <a href="/">Home</a>
+            <a href="/pages/login.html">Login</a>
+            <a href="/pages/register.html">Register</a>
+            <!-- ✅ ভুল <p> ট্যাগ সরানো হয়েছে -->
         </div>
     </nav>
 
@@ -26,7 +27,7 @@
         <input type="password" id="password" placeholder="Password" />
         <button class="btn" onclick="login()">Login</button>
 
-        <p class="form-link">Don't have an account? <a href="register.html">Register</a></p>
+        <p class="form-link">Don't have an account? <a href="/pages/register.html">Register</a></p>  <!-- ✅ fixed -->
     </div>
 
     <script>
@@ -42,7 +43,7 @@
 
             const data = await res.json();
             if (data.success) {
-                window.location.href = 'dashboard.html';
+                window.location.href = '/dashboard';  // ✅ fixed
             } else {
                 document.getElementById('error').textContent = data.error;
             }
