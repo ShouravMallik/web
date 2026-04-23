@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Purchase History</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
     <nav>
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
-            <a href="/dashboard">← Dashboard</a>              <!-- ✅ fixed -->
-            <a href="/pages/stats.html">📊 Stats</a>          <!-- ✅ fixed -->
+            <a href="/dashboard">← Dashboard</a>
+            <a href="/stats">📊 Stats</a>
             <a href="#" onclick="logout()">Logout</a>
         </div>
     </nav>
@@ -34,46 +37,95 @@
         </div>
     </div>
 
-    <script>
-        async function loadHistory() {
-            const freqRes  = await fetch('/history/frequent');
-            const frequent = await freqRes.json();
-
-            const freqContainer = document.getElementById('frequent-container');
-            if (!frequent.length) {
-                freqContainer.innerHTML = '<p class="empty-msg">No purchase history yet. Start shopping!</p>';
-            } else {
-                freqContainer.innerHTML = frequent.map(item => `
-                    <div class="frequent-chip">
-                        <span class="freq-name">${item.item_name}</span>
-                        <span class="freq-count">${item.times}x</span>
-                    </div>
-                `).join('');
-            }
-
-            const histRes  = await fetch('/history/all');
-            const history  = await histRes.json();
-
-            const histContainer = document.getElementById('history-container');
-            if (!history.length) {
-                histContainer.innerHTML = '<p class="empty-msg">No history yet.</p>';
-            } else {
-                histContainer.innerHTML = history.map(h => `
-                    <div class="history-row">
-                        <div class="history-name">${h.item_name}</div>
-                        <div class="history-meta">x${h.quantity} · ৳${parseFloat(h.price * h.quantity).toFixed(2)}</div>
-                        <div class="history-date">${new Date(h.purchased_at).toLocaleDateString()}</div>
-                    </div>
-                `).join('');
-            }
+<script>
+async function loadHistory() {
+    try {
+        // ✅ Check login status first
+        const meRes = await fetch('/me', { credentials: 'include' });
+        const me = await meRes.json();
+        if (!me.user) {
+            window.location.href = '/login';
+            return;
         }
 
-        async function logout() {
-            await fetch('/logout');
-            window.location.href = '/pages/login.html';  // ✅ fixed
+        // 🔥 Frequently
+        const freqRes = await fetch('/api/history/frequent', { credentials: 'include' });
+
+        // ✅ Handle 401 specifically
+        if (freqRes.status === 401) {
+            window.location.href = '/login';
+            return;
         }
 
-        loadHistory();
-    </script>
+        if (!freqRes.ok) throw new Error("Failed to load frequent");
+
+        const frequent = await freqRes.json();
+        // ... rest of your code
+
+        const freqContainer = document.getElementById('frequent-container');
+
+        freqContainer.innerHTML = frequent.length
+            ? frequent.map(item => `
+                <div class="frequent-chip">
+                    <span class="freq-name">${item.item_name}</span>
+                    <span class="freq-count">${item.times}x</span>
+                </div>
+            `).join('')
+            : '<p class="empty-msg">No purchase history yet. Start shopping!</p>';
+
+
+        // 🕐 History
+        const histRes = await fetch('/api/history/all', {
+            credentials: 'include'
+        });
+if (histRes.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        if (!histRes.ok) throw new Error("Failed to load history");
+
+        const history = await histRes.json();
+
+        const histContainer = document.getElementById('history-container');
+
+        histContainer.innerHTML = history.length
+            ? history.map(h => `
+                <div class="history-row">
+                    <div class="history-name">${h.item_name}</div>
+                    <div class="history-meta">
+                        x${h.quantity || 1} · ৳${((h.price || 0) * (h.quantity || 1)).toFixed(2)}
+                    </div>
+                    <div class="history-date">
+                        ${new Date(h.purchased_at).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('')
+            : '<p class="empty-msg">No history yet.</p>';
+
+    } catch (err) {
+        console.error(err);
+
+        document.getElementById('frequent-container').innerHTML =
+            '<p class="empty-msg">Error loading data</p>';
+
+        document.getElementById('history-container').innerHTML =
+            '<p class="empty-msg">Error loading data</p>';
+    }
+}
+
+
+// 🚪 Logout FIXED
+async function logout() {
+    await fetch('/logout', {
+        credentials: 'include'
+    });
+
+    window.location.href = '/login';
+}
+
+// 🚀 load on page open
+loadHistory();
+</script>
+
 </body>
 </html>

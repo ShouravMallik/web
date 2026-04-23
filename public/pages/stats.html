@@ -14,7 +14,7 @@
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
             <a href="/dashboard">← Dashboard</a>                     <!-- ✅ fixed -->
-            <a href="/pages/history.html">📋 History</a>             <!-- ✅ fixed -->
+            <a href="/history">📋 History</a>             <!-- ✅ fixed -->
             <a href="#" onclick="logout()">Logout</a>
         </div>
     </nav>
@@ -64,11 +64,11 @@
 
     <script>
         async function loadStats() {
-            const res  = await fetch('/stats');
+            const res  = await fetch('/api/stats/data');
             const data = await res.json();
 
             if (data.error) {
-                window.location.href = '/pages/login.html';          // ✅ fixed
+                window.location.href = '/login';          // ✅ fixed
                 return;
             }
 
@@ -129,7 +129,7 @@
 
         async function logout() {
             await fetch('/logout');
-            window.location.href = '/pages/login.html';              // ✅ fixed
+            window.location.href = '/login';              // ✅ fixed
         }
 
         loadStats();

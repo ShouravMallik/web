@@ -12,8 +12,8 @@
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
             <a href="/">Home</a>
-            <a href="/pages/login.html">Login</a>
-            <a href="/pages/register.html">Register</a>
+            <a href="/login">Login</a>
+            <a href="/register">Register</a>
         </div>
     </nav>
 
@@ -26,7 +26,7 @@
         <input type="password" id="password" placeholder="Password" />
         <button class="btn" onclick="register()">Register</button>
 
-        <p class="form-link">Already have an account? <a href="/pages/login.html">Login</a></p>
+        <p class="form-link">Already have an account? <a href="/login">Login</a></p>
     </div>
 
     <script>
@@ -43,7 +43,7 @@
 
             const data = await res.json();
             if (data.success) {
-                window.location.href = '/pages/login.html';  // ✅ fixed
+                window.location.href = '/login';  // ✅ fixed
             } else {
                 document.getElementById('error').textContent = data.error;
             }

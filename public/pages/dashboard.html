@@ -13,8 +13,8 @@
         <div class="logo">🛒 ShopList</div>
         <div class="nav-links">
             <span id="username"></span>
-            <a href="/pages/stats.html">📊 Stats</a>        <!-- ✅ fixed -->
-            <a href="/pages/history.html">📋 History</a>    <!-- ✅ fixed -->
+            <a href="/stats">📊 Stats</a>        <!-- ✅ fixed -->
+            <a href="/history">📋 History</a>    <!-- ✅ fixed -->
             <a href="#" onclick="logout()">Logout</a>
         </div>
     </nav>
@@ -89,7 +89,7 @@
             const res = await fetch('/me');
             const data = await res.json();
             if (!data.user) {
-                window.location.href = '/pages/login.html';  // ✅ fixed
+                window.location.href = '/login';  // ✅ fixed
             } else {
                 document.getElementById('username').textContent = 'Hi, ' + data.user.name;
             }
@@ -185,12 +185,12 @@
         function openList(id, name) {
             localStorage.setItem('currentListId', id);
             localStorage.setItem('currentListName', name);
-            window.location.href = '/pages/list.html';  // ✅ fixed
+            window.location.href = '/list';  // ✅ fixed
         }
 
         async function logout() {
             await fetch('/logout');
-            window.location.href = '/pages/login.html';  // ✅ fixed
+            window.location.href = '/login';  // ✅ fixed
         }
 
         checkAuth();
