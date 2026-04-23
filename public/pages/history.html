@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase History</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🛒 ShopList</div>
+        <div class="nav-links">
+            <a href="dashboard.html">← Dashboard</a>
+            <a href="stats.html">📊 Stats</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="dashboard">
+        <div class="dashboard-header">
+            <h2>📋 Purchase History</h2>
+        </div>
+
+        <!-- FREQUENTLY BOUGHT -->
+        <div class="stat-section">
+            <h3>🔥 Frequently Bought</h3>
+            <div id="frequent-container" class="frequent-grid"></div>
+        </div>
+
+        <!-- FULL HISTORY -->
+        <div class="stat-section" style="margin-top:32px;">
+            <h3>🕐 Recent Purchases</h3>
+            <div id="history-container"></div>
+        </div>
+    </div>
+
+    <script>
+        async function loadHistory() {
+            // Frequent items
+            const freqRes  = await fetch('/history/frequent');
+            const frequent = await freqRes.json();
+
+            const freqContainer = document.getElementById('frequent-container');
+            if (!frequent.length) {
+                freqContainer.innerHTML = '<p class="empty-msg">No purchase history yet. Start shopping!</p>';
+            } else {
+                freqContainer.innerHTML = frequent.map(item => `
+                    <div class="frequent-chip">
+                        <span class="freq-name">${item.item_name}</span>
+                        <span class="freq-count">${item.times}x</span>
+                    </div>
+                `).join('');
+            }
+
+            // Full history
+            const histRes  = await fetch('/history/all');
+            const history  = await histRes.json();
+
+            const histContainer = document.getElementById('history-container');
+            if (!history.length) {
+                histContainer.innerHTML = '<p class="empty-msg">No history yet.</p>';
+            } else {
+                histContainer.innerHTML = history.map(h => `
+                    <div class="history-row">
+                        <div class="history-name">${h.item_name}</div>
+                        <div class="history-meta">x${h.quantity} · ৳${parseFloat(h.price * h.quantity).toFixed(2)}</div>
+                        <div class="history-date">${new Date(h.purchased_at).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function logout() {
+            await fetch('/logout');
+            window.location.href = 'login.html';
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">🛒 ShopList</div>
+        <div class="nav-links">
+    <span id="username"></span>
+    <a href="stats.html">📊 Stats</a>
+    <a href="history.html">📋 History</a>
+    <a href="#" onclick="logout()">Logout</a>
+</div>
+    </nav>
+
+    <div class="dashboard">
+        <div class="dashboard-header">
+            <h2>My Shopping Lists</h2>
+            <div class="create-list">
+                <input type="text" id="listName" placeholder="New list name..." />
+                <button class="btn" onclick="createList()">+ Create</button>
+            </div>
+        </div>
+
+        <!-- TEMPLATES SECTION -->
+        <div class="templates-section">
+            <h3>📋 Quick Templates</h3>
+            <div class="templates-grid">
+                <button class="template-btn" onclick="useTemplate('Weekly Groceries', weeklyItems)">
+                    🥦 Weekly Groceries
+                </button>
+                <button class="template-btn" onclick="useTemplate('Party Shopping', partyItems)">
+                    🎉 Party Shopping
+                </button>
+                <button class="template-btn" onclick="useTemplate('Medicine', medicineItems)">
+                    💊 Medicine
+                </button>
+                <button class="template-btn" onclick="useTemplate('Breakfast Items', breakfastItems)">
+                    🍳 Breakfast Items
+                </button>
+            </div>
+        </div>
+
+        <div id="lists-container" class="lists-grid"></div>
+    </div>
+
+    <script>
+       const weeklyItems = [
+    { name: 'Rice', quantity: 2, price: 60 },
+    { name: 'Milk', quantity: 3, price: 45 },
+    { name: 'Eggs', quantity: 12, price: 120 },
+    { name: 'Bread', quantity: 2, price: 40 },
+    { name: 'Onion', quantity: 1, price: 30 },
+    { name: 'Oil', quantity: 1, price: 150 },
+    { name: 'Sugar', quantity: 1, price: 50 },
+    { name: 'Salt', quantity: 1, price: 20 }
+];
+const partyItems = [
+    { name: 'Soft Drinks', quantity: 6, price: 40 },
+    { name: 'Chips', quantity: 5, price: 30 },
+    { name: 'Cake', quantity: 1, price: 500 },
+    { name: 'Paper Plates', quantity: 2, price: 50 },
+    { name: 'Juice', quantity: 4, price: 60 },
+    { name: 'Napkins', quantity: 2, price: 30 },
+    { name: 'Candles', quantity: 1, price: 80 }
+];
+const medicineItems = [
+    { name: 'Paracetamol', quantity: 2, price: 20 },
+    { name: 'Antacid', quantity: 1, price: 50 },
+    { name: 'Vitamin C', quantity: 1, price: 150 },
+    { name: 'Bandage', quantity: 1, price: 40 },
+    { name: 'Cotton', quantity: 1, price: 30 }
+];
+const breakfastItems = [
+    { name: 'Bread', quantity: 2, price: 40 },
+    { name: 'Butter', quantity: 1, price: 90 },
+    { name: 'Eggs', quantity: 6, price: 60 },
+    { name: 'Milk', quantity: 2, price: 45 },
+    { name: 'Cornflakes', quantity: 1, price: 180 },
+    { name: 'Jam', quantity: 1, price: 120 }
+];
+
+async function checkAuth() {
+    const res = await fetch('/me');
+    const data = await res.json();
+    if (!data.user) {
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('username').textContent = 'Hi, ' + data.user.name;
+    }
+}
+
+async function loadLists() {
+    const res = await fetch('/lists/progress');
+    const lists = await res.json();
+    const container = document.getElementById('lists-container');
+    container.innerHTML = '';
+
+    if (!Array.isArray(lists) || !lists.length) {
+        container.innerHTML = '<p class="empty-msg">No lists yet. Create one above!</p>';
+        return;
+    }
+
+    lists.forEach(list => {
+        const total     = parseInt(list.total) || 0;
+        const completed = parseInt(list.completed) || 0;
+        const percent   = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const cost      = parseFloat(list.total_cost || 0).toFixed(2);
+
+        const card = document.createElement('div');
+        card.className = 'list-card';
+        card.innerHTML = `
+            <div class="list-card-title" onclick="openList(${list.id}, '${list.name}')">
+                🛒 ${list.name}
+            </div>
+            <div class="list-card-date">📅 ${new Date(list.created_at).toLocaleDateString()}</div>
+            <div class="progress-section">
+                <div class="progress-text">${completed}/${total} items · ${percent}%</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width:${percent}%"></div>
+                </div>
+            </div>
+            <div class="cost-display">💰 Est. Cost: ৳${cost}</div>
+            <div class="card-actions">
+                <button class="btn btn-sm" onclick="openList(${list.id}, '${list.name}')">Open</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteList(${list.id})">Delete</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+async function createList() {
+    const name = document.getElementById('listName').value.trim();
+    if (!name) return alert('Enter a list name');
+    const res = await fetch('/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+        document.getElementById('listName').value = '';
+        loadLists();
+    }
+}
+
+async function useTemplate(name, items) {
+    const res = await fetch('/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!data.success) return alert('Failed to create list');
+
+    const listId = data.id;
+    for (const item of items) {
+        await fetch('/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                list_id: listId,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            })
+        });
+    }
+    loadLists();
+    alert(`✅ "${name}" template created with ${items.length} items!`);
+}
+
+async function deleteList(id) {
+    if (!confirm('Delete this list?')) return;
+    await fetch('/lists/' + id, { method: 'DELETE' });
+    loadLists();
+}
+
+function openList(id, name) {
+    localStorage.setItem('currentListId', id);
+    localStorage.setItem('currentListName', name);
+    window.location.href = 'list.html';
+}
+
+async function logout() {
+    await fetch('/logout');
+    window.location.href = 'login.html';
+}
+
+checkAuth();
+loadLists();
+    </script>
+</body>
+</html>

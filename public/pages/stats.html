@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="logo">🛒 ShopList</div>
+        <div class="nav-links">
+            <a href="dashboard.html">← Dashboard</a>
+            <a href="history.html">📋 History</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="dashboard">
+        <div class="dashboard-header">
+            <h2>📊 My Statistics</h2>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-value" id="total-lists">—</div>
+                <div class="stat-label">Total Lists</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="total-bought">—</div>
+                <div class="stat-label">Items Purchased</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value" id="completion-rate">—</div>
+                <div class="stat-label">Completion Rate</div>
+            </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h3>📈 Weekly Spending (৳)</h3>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>🏆 Most Bought Items</h3>
+                <canvas id="topChart"></canvas>
+            </div>
+        </div>
+
+        <!-- COMPLETION RATE BAR -->
+        <div class="stat-section">
+            <h3>🎯 Overall Completion Rate</h3>
+            <div class="progress-bar-bg" style="height:16px; margin-top:12px;">
+                <div class="progress-bar-fill" id="completion-bar" style="width:0%"></div>
+            </div>
+            <p id="completion-text" style="margin-top:8px; color:var(--text-muted); font-size:14px;"></p>
+        </div>
+    </div>
+
+    <script>
+        async function loadStats() {
+            const res  = await fetch('/stats');
+            const data = await res.json();
+
+            if (data.error) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Stat cards
+            document.getElementById('total-lists').textContent  = data.total_lists;
+            document.getElementById('total-bought').textContent = data.total_bought;
+            document.getElementById('completion-rate').textContent = data.completion_rate + '%';
+
+            // Completion bar
+            document.getElementById('completion-bar').style.width = data.completion_rate + '%';
+            document.getElementById('completion-text').textContent =
+                `${data.completion_rate}% of all items completed across all lists`;
+
+            // Weekly chart
+            const days  = data.weekly.map(w => w.day.slice(5));
+            const spent = data.weekly.map(w => parseFloat(w.spent));
+
+            new Chart(document.getElementById('weeklyChart'), {
+                type: 'bar',
+                data: {
+                    labels: days.length ? days : ['No data'],
+                    datasets: [{
+                        label: 'Spent (৳)',
+                        data: spent.length ? spent : [0],
+                        backgroundColor: 'rgba(82,183,136,0.7)',
+                        borderColor: '#2d6a4f',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // Top items chart
+            const names = data.top_items.map(i => i.item_name);
+            const times = data.top_items.map(i => i.times);
+
+            new Chart(document.getElementById('topChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: names.length ? names : ['No data yet'],
+                    datasets: [{
+                        data: times.length ? times : [1],
+                        backgroundColor: [
+                            '#52b788','#2d6a4f','#95d5b2',
+                            '#40916c','#b7e4c7','#1b4332','#74c69d','#d8f3dc'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 16, font: { size: 13 } } }
+                    }
+                }
+            });
+        }
+
+        async function logout() {
+            await fetch('/logout');
+            window.location.href = 'login.html';
+        }
+
+        loadStats();
+    </script>
+</body>
+</html>
