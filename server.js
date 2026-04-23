@@ -101,9 +101,10 @@ app.get('/logout', (req, res) => {
 app.get('/me', (req, res) => {
     res.json({ user: req.session.user || null });
 });
+app.get('/', (req, res) => {
+    res.send("Server OK ✅");
+});
 
-// ─── HEALTH CHECK (Railway uses this) ───────────────────────────
-app.get('/health', (req, res) => res.send('OK'));
 
 // ─── GLOBAL ERROR HANDLER (IMPORTANT) ───────────────────────────
 app.use((err, req, res, next) => {
